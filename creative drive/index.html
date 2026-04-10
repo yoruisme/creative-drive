@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Creative Drive</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="sidebar">
+    <h2>✨ Creative Drive</h2>
+    <a href="index.html" class="text">🏠 All Files</a>
+    <a href="folders.html" class="text">📁 Folders</a>
+    <a href="starred.html" class="text">⭐ Starred</a>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <input type="text" id="searchInput" placeholder="Search your work...">
+     <button id="addBtn">+ Add</button>
+    </div>
+
+    <h1>My Files</h1>
+
+    <div class="grid" id="folderGrid">
+      <div class="card">
+        <p>UI Design</p>
+      </div>
+      <div class="card">
+        <p>Coding</p>
+      </div>
+    
+    <div class="card">
+        <p>Asignment</p>
+    </div>
+    <div class="card">
+        <p>Inspiration</p>
+    </div>
+  </div>
+  </div>
+  <script>
+  const addBtn = document.getElementById("addBtn");
+  const grid = document.getElementById("folderGrid");
+
+  addBtn.addEventListener("click", function () {
+    let folderName = prompt("Enter folder name:");
+
+    if (folderName && folderName.trim() !== "") {
+      let newFolder = document.createElement("div");
+      newFolder.classList.add("card");
+
+      newFolder.innerHTML = `<p>${folderName}</p>`;
+
+      grid.appendChild(newFolder);
+    }
+  });
+</script>
+
+
+</body>
+</html>
+
+<script src="script.js"></script>

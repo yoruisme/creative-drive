@@ -1,0 +1,102 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  background-color: #f2cfed;
+
+  .sidebar a {
+  display: block;
+  padding: 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: black;
+  background-color: #f2cfed;
+}
+
+.sidebar a:hover {
+  background-color: rgb(211, 92, 193);
+}
+
+}
+.text {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.text:hover {
+  color: #d026b7;
+  text-shadow: 0 0 5px #ddd4dc;
+  transform: translateX(5px);
+}            
+
+
+/* Main */
+.main {
+  flex: 1;
+  padding: 20px;
+  background-color: #f2cfed;
+
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  background-color: #f2cfed;
+  
+}
+
+input {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  width: 60%;
+}
+
+button {
+  background: #7c83fd;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+}
+
+button:hover {
+  background: #5a61e0;
+  transform: scale(1.05);
+}
+
+/* Grid */
+.grid {
+  display: flex;
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+input {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  width: 60%;
+  transition: 0.3s;
+}
+
+input:focus {
+  outline: none;
+  border: 1px solid #7c83fd;
+  box-shadow: 0 0 8px rgba(124, 131, 253, 0.5);
+}
