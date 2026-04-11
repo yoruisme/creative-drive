@@ -1,12 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Starred</title>
+  <meta charset="UTF-8">
+  <title>Creative Drive - Starred</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1> Hi </h1>
-    
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>&#x2728; Creative Drive</h2>
+    <a href="index.html">&#x1F3E0; All Files</a>
+    <a href="starred.html">&#x2B50; Starred</a>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <input type="text" id="searchInput" placeholder="&#x1F50D; Search your work...">
+      <button id="addBtn">&#x2728; New Folder</button>
+    </div>
+
+    <h1>&#x2B50; Starred</h1>
+
+    <div class="grid" id="folderGrid"></div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h2>&#x1F4C1; New Folder</h2>
+      <input type="text" id="folderInput" placeholder="Folder name...">
+      <div class="modal-buttons">
+        <button id="cancelBtn">Cancel</button>
+        <button id="saveBtn">&#x1F33F; Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,17 @@
+body {
+  background: #f9fafb;
+}
+
+.card {
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.02);
+}
+
+.topbar {
+  backdrop-filter: blur(10px);
+}

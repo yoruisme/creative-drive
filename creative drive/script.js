@@ -1,104 +1,177 @@
-// 1. 读取数据（没有就给默认）
-let folders = JSON.parse(localStorage.getItem("folders")) || [
-  { name: "UI Design", starred: false },
-  { name: "Coding", starred: true }
-];
+document.addEventListener("DOMContentLoaded", () => {
+  let folders = [];
 
-// 2. 判断当前页面（放在初始化之前）
-let currentPage = "all";
-if (window.location.pathname.includes("starred")) {
-  currentPage = "starred";
-}
+  // ===== 数据初始化 =====
+  try {
+    const stored = localStorage.getItem("folders");
+    if (!stored) {
+      folders = [
+        { id: crypto.randomUUID(), name: "UI Design", starred: false, files: [] },
+        { id: crypto.randomUUID(), name: "Coding", starred: true, files: [] }
+      ];
+      localStorage.setItem("folders", JSON.stringify(folders));
+    } else {
+      folders = JSON.parse(stored);
+    }
+  } catch (e) {
+    folders = [];
+  }
 
-// 3. 存回 storage
-function saveFolders() {
-  localStorage.setItem("folders", JSON.stringify(folders));
-}
+  // 保证每个文件夹对象完整
+  folders.forEach(f => { if (!f.files) f.files = []; });
 
-// 4. 渲染函数
-function renderFolders(filter = "all", searchText = "") {
+  // ===== DOM 元素 =====
   const grid = document.getElementById("folderGrid");
-  if (!grid) return; // 安全检查：防止 HTML 还没加载或 ID 写错
-  grid.innerHTML = "";
+  const addBtn = document.getElementById("addBtn");
+  const modal = document.getElementById("modal");
+  const saveBtn = document.getElementById("saveBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const folderInput = document.getElementById("folderInput");
+  const searchInput = document.getElementById("searchInput");
 
-  folders.forEach((folder, index) => {
-    // ⭐ 收藏过滤
-    if (filter === "starred" && !folder.starred) return;
+  let currentPage = window.location.pathname.includes("starred") ? "starred" : "all";
 
-    // 🔍 搜索过滤
-    if (!folder.name.toLowerCase().includes(searchText.toLowerCase().trim())) return;
-
-    let card = document.createElement("div");
-    card.classList.add("card");
-
-    // 注意：这里建议保留 ondblclick 调用 editInline 或是 renameFolder
-    card.innerHTML = `
-      <p ondblclick="editInline(${index}, this)">📁 ${folder.name}</p>
-      <button onclick="toggleStar(${index})">
-        ${folder.starred ? "⭐" : "☆"}
-      </button>
-    `;
-
-    grid.appendChild(card);
-  });
-}
-
-// --- 这里删除了原来多余的 grid.appendChild(card) ---
-
-// 5. 新增 folder
-document.getElementById("addBtn")?.addEventListener("click", () => {
-  let name = prompt("Enter folder name:");
-  if (name && name.trim() !== "") {
-    folders.push({ name: name.trim(), starred: false });
-    saveFolders();
-    renderFolders(currentPage);
+  function save() {
+    localStorage.setItem("folders", JSON.stringify(folders));
   }
-});
 
-// 6. 收藏切换
-function toggleStar(index) {
-  folders[index].starred = !folders[index].starred;
-  saveFolders();
-  renderFolders(currentPage);
-}
+  // ===== 渲染逻辑 =====
+  function render(search = "") {
+    if (!grid) return;
+    grid.innerHTML = "";
 
-// 7. 重命名 (Prompt 方式)
-function renameFolder(index) {
-  let newName = prompt("Rename your folder:", folders[index].name);
-  if (newName && newName.trim() !== "") {
-    folders[index].name = newName.trim();
-    saveFolders();
-    renderFolders(currentPage);
+    const filtered = folders.filter(f => {
+      const matchPage = (currentPage === "starred") ? f.starred : true;
+      const matchSearch = f.name.toLowerCase().includes(search.toLowerCase());
+      return matchPage && matchSearch;
+    });
+
+    filtered.forEach(folder => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.dataset.id = folder.id;
+
+      card.innerHTML = `
+        <p class="folder-title">📁 <span>${folder.name}</span></p>
+        <p style="font-size:12px;color:#999;margin:4px 0 12px;">${folder.files.length} file${folder.files.length !== 1 ? "s" : ""}</p>
+        <div class="card-actions">
+          <button class="star-btn" data-star="${folder.id}">
+            ${folder.starred ? "⭐" : "☆"}
+          </button>
+          <button class="delete-btn" data-delete="${folder.id}">🗑</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
   }
-}
 
-// 8. 行内编辑 (更高级的交互)
-function editInline(index, element) {
-  let currentName = folders[index].name;
-  let input = document.createElement("input");
-  input.value = currentName;
-  input.style.width = "80%"; // 稍微控制一下样式
+  // ===== 操作函数 =====
+  const toggleStar = (id) => {
+    const folder = folders.find(f => f.id === id);
+    if (folder) {
+      folder.starred = !folder.starred;
+      save();
+      render(searchInput.value);
+    }
+  };
 
-  element.replaceWith(input);
-  input.focus();
+  const deleteFolder = (id) => {
+    if (confirm("确定删除这个文件夹吗？")) {
+      folders = folders.filter(f => f.id !== id);
+      save();
+      render(searchInput.value);
+    }
+  };
 
-  input.addEventListener("blur", () => {
-    const finalValue = input.value.trim();
-    folders[index].name = finalValue || currentName;
-    saveFolders();
-    renderFolders(currentPage);
+  const renameFolder = (id, textSpan) => {
+    const folder = folders.find(f => f.id === id);
+    const input = document.createElement("input");
+    input.value = folder.name;
+    input.className = "rename-input";
+
+    textSpan.replaceWith(input);
+    input.focus();
+
+    const finishRename = () => {
+      const newName = input.value.trim();
+      if (newName) folder.name = newName;
+      save();
+      render(searchInput.value);
+    };
+
+    input.onblur = finishRename;
+    input.onkeydown = (e) => { if (e.key === "Enter") input.blur(); };
+  };
+
+  // ===== 事件委托 =====
+  grid.addEventListener("click", (e) => {
+    const starBtn = e.target.closest("[data-star]");
+    const deleteBtn = e.target.closest("[data-delete]");
+    const card = e.target.closest(".card");
+
+    if (starBtn) {
+      toggleStar(starBtn.dataset.star);
+      return;
+    }
+
+    if (deleteBtn) {
+      deleteFolder(deleteBtn.dataset.delete);
+      return;
+    }
+
+    if (card) {
+      window.location.href = `folder.html?id=${card.dataset.id}`;
+    }
   });
 
-  input.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") input.blur();
+  // 双击重命名
+  grid.addEventListener("dblclick", (e) => {
+    const card = e.target.closest(".card");
+    const textSpan = e.target.closest(".folder-title span");
+    if (card && textSpan) {
+      renameFolder(card.dataset.id, textSpan);
+    }
   });
-}
 
-// 9. 搜索监听
-const searchInput = document.getElementById("searchInput");
-searchInput?.addEventListener("input", () => {
-  renderFolders(currentPage, searchInput.value);
+  // ===== Modal 逻辑 =====
+  const openModal = () => {
+    modal.style.display = "flex";
+    folderInput.focus();
+    folderInput.style.border = "1px solid #ddd"; // 重置红框
+  };
+
+  const closeModal = () => {
+    modal.style.display = "none";
+    folderInput.value = "";
+    folderInput.style.border = "1px solid #ddd";
+  };
+
+  addBtn.onclick = openModal;
+  cancelBtn.onclick = closeModal;
+
+  // Escape 键关闭 modal
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.style.display === "flex") closeModal();
+  });
+
+  saveBtn.onclick = () => {
+    const name = folderInput.value.trim();
+    if (!name) {
+      // 空名称时给红框提示
+      folderInput.style.border = "1px solid #e24b4a";
+      folderInput.focus();
+      return;
+    }
+    folders.push({ id: crypto.randomUUID(), name, starred: false, files: [] });
+    save();
+    render();
+    closeModal();
+  };
+
+  // 搜索逻辑
+  if (searchInput) {
+    searchInput.oninput = () => render(searchInput.value);
+  }
+
+  render();
 });
-
-// 10. 初始化
-renderFolders(currentPage, "");
