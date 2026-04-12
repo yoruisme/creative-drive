@@ -1,150 +1,1014 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <title>Creative Drive</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    #sakura-canvas {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .sidebar, .main, .modal {
-      position: relative;
-      z-index: 1;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative Drive</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --pink:#ffb3d1;--pink-light:#ffe4f0;--pink-dark:#e8729a;
+  --purple:#c9b8f5;--purple-light:#ede8ff;--mint:#b8f0e0;
+  --bg:#fff5fb;--card-bg:#ffffff;--text:#5a3a5a;--text-light:#9b7a9b;
+  --shadow:0 8px 24px rgba(232,114,154,0.15);
+  --shadow-hover:0 16px 40px rgba(232,114,154,0.25);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:var(--bg);min-height:100vh;color:var(--text)}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(255,179,209,0.5) 1px,transparent 1px),radial-gradient(circle,rgba(201,184,245,0.4) 1px,transparent 1px);background-size:60px 60px,90px 90px;background-position:0 0,30px 30px;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1}
+
+/* AUTH */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.auth-box{background:white;border-radius:28px;padding:40px 36px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(232,114,154,0.2);border:2px solid var(--pink-light);animation:popIn .4s ease}
+.auth-box h1{font-family:'Quicksand',sans-serif;font-size:26px;color:var(--pink-dark);text-align:center;margin-bottom:6px}
+.auth-subtitle{text-align:center;color:var(--text-light);font-size:13px;margin-bottom:24px}
+.auth-tabs{display:flex;gap:8px;margin-bottom:20px;background:var(--pink-light);border-radius:16px;padding:4px}
+.auth-tab{flex:1;padding:10px;border:none;background:transparent;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text-light);cursor:pointer;transition:.2s;box-shadow:none}
+.auth-tab.active{background:white;color:var(--pink-dark);box-shadow:0 4px 12px rgba(232,114,154,0.2)}
+.auth-tab:hover{transform:none}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:700;color:var(--text-light);margin-bottom:6px}
+.field input,.field select{width:100%;padding:12px 16px;border-radius:16px;border:2px solid var(--pink-light);background:white;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);outline:none;transition:.25s;appearance:none}
+.field input:focus,.field select:focus{border-color:var(--purple);box-shadow:0 0 0 4px rgba(201,184,245,0.25)}
+.btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,var(--pink),var(--pink-dark));color:white;border:none;border-radius:20px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:.25s;box-shadow:0 4px 14px rgba(232,114,154,0.35);margin-top:4px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(232,114,154,0.45)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.auth-msg{border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+.auth-msg.show{display:block}
+.auth-msg.error{background:#ffe4e4;color:#c0392b}
+.auth-msg.success{background:#e4ffe8;color:#1a7a3a}
+.link-btn{background:none!important;border:none;color:var(--pink-dark);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;padding:0;text-decoration:underline;box-shadow:none!important;width:auto;display:inline}
+.link-btn:hover{transform:none!important;box-shadow:none!important;opacity:.75}
+.forgot-row{text-align:right;margin-top:-6px;margin-bottom:14px}
+
+/* MAIN APP */
+#main-screen{display:none;flex-direction:row;min-height:100vh}
+.sidebar{width:240px;padding:24px 20px;background:linear-gradient(180deg,#ffe4f0 0%,#ede8ff 100%);border-right:2px solid var(--pink);height:100vh;position:sticky;top:0;flex-shrink:0;z-index:10;display:flex;flex-direction:column;gap:4px}
+.sidebar h2{font-family:'Quicksand',sans-serif;font-size:19px;font-weight:700;color:var(--pink-dark);margin-bottom:10px;letter-spacing:.5px}
+.nav-link{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:16px;color:var(--text);font-weight:600;font-size:14px;cursor:pointer;transition:.25s;border:none;background:transparent;font-family:'Nunito',sans-serif;width:100%;text-align:left;box-shadow:none}
+.nav-link:hover{transform:translateX(5px) scale(1.01)!important;color:var(--pink-dark);background:rgba(255,255,255,0.55);box-shadow:0 3px 10px rgba(232,114,154,0.15)!important}
+.nav-link.active-link{background:rgba(255,255,255,0.75);color:var(--pink-dark)}
+.sidebar-bottom{margin-top:auto}
+.user-chip{background:white;border-radius:18px;padding:12px 14px;border:1px solid var(--pink-light);margin-bottom:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.2s}
+.user-chip:hover{box-shadow:0 4px 12px rgba(232,114,154,0.2);transform:translateY(-1px)}
+.avatar-circle{width:40px;height:40px;border-radius:50%;border:2px solid var(--pink);flex-shrink:0;background:var(--pink-light);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
+.avatar-circle img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.user-info{min-width:0}
+.user-info strong{display:block;color:var(--text);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.user-info span{font-size:11px;color:var(--text-light)}
+.logout-btn{width:100%;padding:10px;background:#ffe4e4!important;color:#e05a5a!important;border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;box-shadow:none!important}
+.logout-btn:hover{background:#ffc5c5!important;transform:none!important;box-shadow:none!important}
+.main{flex:1;padding:32px;position:relative;z-index:1;overflow-y:auto}
+.main h1{font-family:'Quicksand',sans-serif;font-size:28px;font-weight:700;color:var(--pink-dark);margin-bottom:24px;animation:slideDown .5s ease}
+.topbar{display:flex;gap:12px;align-items:center;margin-bottom:28px;flex-wrap:wrap}
+.topbar input[type="text"]{padding:12px 18px;border-radius:20px;border:2px solid var(--pink);background:white;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);flex:1;min-width:160px;transition:.3s;outline:none}
+.topbar input[type="text"]:focus{border-color:var(--purple);box-shadow:0 0 0 4px rgba(201,184,245,0.3)}
+button{background:linear-gradient(135deg,var(--pink) 0%,var(--pink-dark) 100%);color:white;border:none;padding:12px 22px;border-radius:20px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.25s;box-shadow:0 4px 12px rgba(232,114,154,0.3)}
+button:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 8px 20px rgba(232,114,154,0.4)}
+button:active{transform:scale(.97)}
+.sync-badge{font-size:11px;background:var(--mint);color:#0e5a3a;padding:4px 11px;border-radius:20px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.grid{display:flex;flex-wrap:wrap;gap:20px}
+.card{background:var(--card-bg);border-radius:24px;box-shadow:var(--shadow);transition:all .3s cubic-bezier(.34,1.56,.64,1);cursor:pointer;border:2px solid transparent;animation:popIn .4s ease both;position:relative;overflow:hidden}
+.card::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,179,209,0.12) 0%,transparent 60%);opacity:0;transition:opacity .3s;pointer-events:none}
+.card:hover::after{opacity:1}
+.card:hover{transform:translateY(-8px) rotate(-1deg)!important;box-shadow:var(--shadow-hover);border-color:var(--pink)}
+.card:nth-child(2n):hover{transform:translateY(-8px) rotate(1deg)!important}
+.card:not(.file-card){padding:28px 24px;min-width:160px}
+.folder-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
+.card-actions{display:flex;gap:8px;margin-top:14px}
+.star-btn,.delete-btn{background:var(--pink-light)!important;color:var(--pink-dark)!important;border:none;padding:6px 12px!important;border-radius:12px!important;font-size:13px!important;box-shadow:none!important;font-weight:700}
+.star-btn:hover,.delete-btn:hover{background:var(--pink)!important;transform:scale(1.08)!important;box-shadow:none!important}
+.delete-btn{background:#ffe4e4!important;color:#e05a5a!important}
+.delete-btn:hover{background:#ffc5c5!important}
+.file-card{padding:16px;width:160px}
+.file-icon{background:linear-gradient(135deg,var(--purple-light),var(--pink-light));color:var(--pink-dark);font-size:12px;font-weight:800;text-align:center;border-radius:14px;padding:22px 0;margin-bottom:10px;letter-spacing:1px;border:2px dashed var(--purple)}
+.file-name{font-size:11px;color:var(--text-light);word-break:break-all;text-align:center;margin:6px 0;font-weight:600}
+.file-actions{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.file-actions a{text-decoration:none}
+.download-btn{font-size:11px!important;padding:6px 10px!important;background:linear-gradient(135deg,var(--mint),#7de8c8)!important;color:#1a7a5a!important;border-radius:10px!important;box-shadow:none!important;font-weight:700!important}
+.delete-file-btn{background:#ffe4e4!important;color:#e05a5a!important;font-size:11px!important;padding:6px 10px!important;border-radius:10px!important;box-shadow:none!important;font-weight:700!important}
+.modal{display:none;position:fixed;inset:0;background:rgba(255,200,220,0.4);backdrop-filter:blur(6px);align-items:center;justify-content:center;z-index:100}
+.modal.open{display:flex}
+.modal-content{background:white;padding:36px;border-radius:28px;display:flex;flex-direction:column;gap:14px;min-width:320px;max-width:440px;width:92%;box-shadow:0 20px 60px rgba(232,114,154,0.25);border:2px solid var(--pink-light);animation:popIn .35s cubic-bezier(.34,1.56,.64,1)}
+.modal-content h2{font-family:'Quicksand',sans-serif;font-size:20px;color:var(--pink-dark);text-align:center}
+.modal-content input,.modal-content select{width:100%;padding:12px 16px;border-radius:16px;border:2px solid var(--pink-light);background:white;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);outline:none;transition:.25s;appearance:none}
+.modal-content input:focus,.modal-content select:focus{border-color:var(--purple);box-shadow:0 0 0 4px rgba(201,184,245,0.25)}
+.modal-buttons{display:flex;gap:10px;justify-content:flex-end}
+.btn-cancel{background:var(--pink-light)!important;color:var(--pink-dark)!important;box-shadow:none!important}
+.btn-cancel:hover{background:var(--pink)!important;transform:none!important;box-shadow:none!important}
+.avatar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.avatar-opt{width:48px;height:48px;border-radius:50%;border:3px solid transparent;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;background:var(--pink-light);transition:.2s;box-shadow:none;padding:0}
+.avatar-opt:hover{border-color:var(--pink-dark);transform:scale(1.1)!important;box-shadow:none!important}
+.avatar-opt.selected{border-color:var(--pink-dark);box-shadow:0 0 0 3px rgba(232,114,154,0.3)!important}
+.avatar-opt img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.avatar-upload-label{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:14px;border:2px dashed var(--pink);color:var(--pink-dark);font-size:13px;font-weight:700;cursor:pointer;transition:.2s;background:var(--pink-light)}
+.avatar-upload-label:hover{background:var(--pink);color:white}
+.loading-overlay{position:fixed;inset:0;background:rgba(255,245,251,0.88);display:flex;align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:12px}
+.spinner{width:40px;height:40px;border:4px solid var(--pink-light);border-top-color:var(--pink-dark);border-radius:50%;animation:spin 1s linear infinite}
+.loading-text{color:var(--text-light);font-size:14px;font-weight:600}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-light);width:100%}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.back-btn{background:var(--pink-light)!important;color:var(--pink-dark)!important;box-shadow:none!important;margin-bottom:24px}
+.back-btn:hover{background:var(--pink)!important;transform:none!important;box-shadow:none!important}
+.recent-section{margin-top:36px}
+.recent-section h2{font-family:'Quicksand',sans-serif;font-size:20px;font-weight:700;color:var(--pink-dark);margin-bottom:16px}
+.recent-card-meta{font-size:11px;color:#c9a0c9;margin:4px 0 12px;font-weight:600}
+@keyframes popIn{from{opacity:0;transform:scale(.85) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.card:nth-child(1){animation-delay:.05s}.card:nth-child(2){animation-delay:.10s}
+.card:nth-child(3){animation-delay:.15s}.card:nth-child(4){animation-delay:.20s}
+.card:nth-child(5){animation-delay:.25s}.card:nth-child(6){animation-delay:.30s}
+#sakura-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+</style>
 </head>
 <body>
+<canvas id="sakura-canvas"></canvas>
+<div id="app">
 
-  <!-- Sakura canvas -->
-  <canvas id="sakura-canvas"></canvas>
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <h1>✨ Creative Drive</h1>
+    <p class="auth-subtitle">登录后，所有设备上的内容自动同步噢(´▽`)♡</p>
+    <div class="auth-tabs" id="auth-tabs-row">
+      <button class="auth-tab active" onclick="switchTab('login')">登录</button>
+      <button class="auth-tab" onclick="switchTab('register')">注册</button>
+    </div>
+    <div id="auth-msg" class="auth-msg"></div>
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h2>&#x2728; Creative Drive</h2>
-    <a href="index.html">&#x1F3E0; All Files</a>
-    <a href="starred.html">&#x2B50; Starred</a>
-  </div>
-
-  <!-- Main -->
-  <div class="main">
-    <div class="topbar">
-      <input type="text" id="searchInput" placeholder="&#x1F50D; Search your work...">
-      <button id="addBtn">&#x2728; New Folder</button>
+    <!-- LOGIN -->
+    <div id="fields-login">
+      <div class="field"><label>邮箱</label><input type="text" id="auth-email" placeholder="your@email.com"></div>
+      <div class="field"><label>密码</label><input type="password" id="auth-password" placeholder="至少 6 位"></div>
+      <div class="forgot-row"><button class="link-btn" onclick="switchTab('forgot')">忘记密码？</button></div>
+      <button class="btn-primary" id="login-btn" onclick="doLogin()">登录</button>
     </div>
 
-    <h1>&#x1F4C2; My Files</h1>
+    <!-- REGISTER -->
+    <div id="fields-register" style="display:none">
+      <div class="field"><label>邮箱</label><input type="text" id="reg-email" placeholder="your@email.com"></div>
+      <div class="field"><label>密码</label><input type="password" id="reg-password" placeholder="至少 6 位"></div>
+      <div class="field"><label>确认密码</label><input type="password" id="reg-confirm" placeholder="再输入一次"></div>
+      <div class="field">
+        <label>密保问题（用于找回密码）</label>
+        <select id="reg-q">
+          <option value="">── 请选择 ──</option>
+          <option value="pet">您第一只宠物的名字？</option>
+          <option value="city">您出生的城市？</option>
+          <option value="school">您小学的名字？</option>
+          <option value="book">您最喜欢的书名？</option>
+          <option value="food">您最喜欢的食物？</option>
+          <option value="designer">这个网站的设计者是？</option>
+        </select>
+      </div>
+      <div class="field"><label>密保答案</label><input type="text" id="reg-a" placeholder="答案（不区分大小写）"></div>
+      <button class="btn-primary" id="reg-btn" onclick="doRegister()">注册账号</button>
+    </div>
 
-    <div class="grid" id="folderGrid"></div>
-  </div>
-
-  <!-- Modal -->
-  <div class="modal" id="modal">
-    <div class="modal-content">
-      <h2>&#x1F4C1; New Folder</h2>
-      <input type="text" id="folderInput" placeholder="Folder name...">
-      <div class="modal-buttons">
-        <button id="cancelBtn">Cancel</button>
-        <button id="saveBtn">&#x1F33F; Create</button>
+    <!-- FORGOT PASSWORD -->
+    <div id="fields-forgot" style="display:none">
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;text-align:center">通过密保问题重置密码</p>
+      <div class="field"><label>邮箱</label><input type="text" id="forgot-email" placeholder="your@email.com"></div>
+      <div id="forgot-step2" style="display:none">
+        <div class="field"><label id="forgot-q-label">密保问题</label><input type="text" id="forgot-answer" placeholder="输入答案"></div>
+        <div class="field"><label>新密码</label><input type="password" id="forgot-newpw" placeholder="至少 6 位"></div>
+        <div class="field"><label>确认新密码</label><input type="password" id="forgot-confirmpw" placeholder="再输入一次"></div>
+      </div>
+      <button class="btn-primary" id="forgot-btn" onclick="doForgot()">下一步</button>
+      <div style="text-align:center;margin-top:14px">
+        <button class="link-btn" onclick="switchTab('login')">← 返回登录</button>
       </div>
     </div>
   </div>
+</div>
 
-  <script src="script.js"></script>
-  <script>
-    const canvas = document.getElementById("sakura-canvas");
-    const ctx = canvas.getContext("2d");
+<!-- MAIN SCREEN -->
+<div id="main-screen">
+  <div class="sidebar">
+    <h2>✨ Creative Drive</h2>
+    <button class="nav-link active-link" id="nav-all" onclick="showView('all')">🏠 All Files</button>
+    <button class="nav-link" id="nav-starred" onclick="showView('starred')">⭐ Starred</button>
+    <div class="sidebar-bottom">
+      <div class="user-chip" onclick="openAvatarModal()" title="点击更换头像">
+        <div class="avatar-circle" id="sidebar-avatar">🌸</div>
+        <div class="user-info">
+          <strong id="user-display">user@email.com</strong>
+          <span>点击更换头像</span>
+        </div>
+      </div>
+      <button style="width:100%;margin-bottom:8px;background:var(--purple-light)!important;color:#6a4aac!important;box-shadow:none!important;font-size:13px!important;padding:10px!important;border-radius:14px!important;" onclick="openSecurityModal()">🔐 修改密保问题</button>
+      <button class="logout-btn" onclick="logout()">退出登录</button>
+    </div>
+  </div>
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+  <div class="main">
+    <!-- FOLDERS VIEW -->
+    <div id="folders-view">
+      <div class="topbar">
+        <input type="text" id="searchInput" placeholder="🔍 搜索文件夹...">
+        <button onclick="openModal()">✨ New Folder</button>
+        <span class="sync-badge" id="sync-badge">✅ 已同步</span>
+      </div>
+      <h1 id="view-title">📂 My Files</h1>
+      <div class="grid" id="folderGrid"></div>
+
+      <!-- RECENTLY OPENED -->
+      <div class="recent-section" id="recent-section" style="display:none">
+        <h2>🕐 最近打开</h2>
+        <div class="grid" id="recentGrid"></div>
+      </div>
+    </div>
+
+    <!-- FOLDER DETAIL VIEW -->
+    <div id="folder-view" style="display:none">
+      <button class="back-btn" onclick="backToFolders()">← 返回</button>
+      <h1 id="folderTitle"></h1>
+      <button onclick="addFile()" style="margin-bottom:24px">📎 Add File</button>
+      <div class="grid" id="fileGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW FOLDER MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h2>📁 New Folder</h2>
+    <input type="text" id="folderInput" placeholder="文件夹名称...">
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button onclick="createFolder()">🌿 Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- AVATAR MODAL -->
+<div class="modal" id="avatar-modal">
+  <div class="modal-content">
+    <h2>🌸 选择头像</h2>
+    <div class="avatar-grid" id="avatar-grid"></div>
+    <label class="avatar-upload-label" style="margin-top:4px">
+      📷 上传自己的图片
+      <input type="file" accept="image/*" id="avatar-file-input" style="display:none" onchange="uploadAvatar(this)">
+    </label>
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeAvatarModal()">取消</button>
+      <button onclick="saveAvatar()">✅ 保存头像</button>
+    </div>
+  </div>
+</div>
+
+<!-- SECURITY QUESTION MODAL -->
+<div class="modal" id="security-modal">
+  <div class="modal-content">
+    <h2>🔐 修改密保问题</h2>
+    <div id="security-msg" class="auth-msg" style="display:none"></div>
+    <div class="field">
+      <label>选择新的密保问题</label>
+      <select id="sec-q">
+        <option value="">── 请选择 ──</option>
+        <option value="pet">您第一只宠物的名字？</option>
+        <option value="city">您出生的城市？</option>
+        <option value="school">您小学的名字？</option>
+        <option value="book">您最喜欢的书名？</option>
+        <option value="food">您最喜欢的食物？</option>
+        <option value="designer">这个网站的设计者是？</option>
+      </select>
+    </div>
+    <div class="field"><label>新的密保答案</label><input type="text" id="sec-a" placeholder="答案（不区分大小写）"></div>
+    <div class="field"><label>当前密码（用于验证身份）</label><input type="password" id="sec-pw" placeholder="输入你的登录密码"></div>
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeSecurityModal()">取消</button>
+      <button onclick="saveSecurityQ()">✅ 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+
+<div class="loading-overlay" id="loading" style="display:none">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">正在加载...</div>
+</div>
+
+</div><!-- #app -->
+
+<script>
+// ══════════════════════════════════════════
+//  STORAGE
+// ══════════════════════════════════════════
+async function hashPw(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw + 'cd-salt-2025'));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+const profileKey = e => 'profile:' + encodeURIComponent(e.toLowerCase());
+const dataKey    = u => 'user-data:' + u;
+const avatarKey  = u => 'avatar:' + u;
+const recentKey  = u => 'recent:' + u;
+
+function sset(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) { console.error('保存失败:', e); }
+}
+
+function sget(k) {
+  try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; }
+  catch(e) { return null; }
+}
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let currentUser = null;
+let folders = [];
+let currentView = 'all';
+let currentFolder = null;
+let selectedAvatar = null;
+let forgotStep = 1;
+
+const EMOJIS = ['🌸','🦋','🐱','🦊','🐰','🌙','⭐','🌈','🍓','🎀'];
+const QLABELS = {
+  pet:      '您第一只宠物的名字？',
+  city:     '您出生的城市？',
+  school:   '您小学的名字？',
+  book:     '您最喜欢的书名？',
+  food:     '您最喜欢的食物？',
+  designer: '这个网站的设计者是？'
+};
+
+// ══════════════════════════════════════════
+//  AUTH UI HELPERS
+// ══════════════════════════════════════════
+function switchTab(mode) {
+  forgotStep = 1;
+  ['login','register','forgot'].forEach(m => {
+    document.getElementById('fields-' + m).style.display = (m === mode) ? '' : 'none';
+  });
+  const tabs = document.querySelectorAll('.auth-tab');
+  tabs[0].classList.toggle('active', mode === 'login');
+  tabs[1].classList.toggle('active', mode === 'register');
+  document.getElementById('auth-tabs-row').style.display = (mode === 'forgot') ? 'none' : '';
+  clearMsg();
+  if (mode === 'forgot') {
+    document.getElementById('forgot-step2').style.display = 'none';
+    document.getElementById('forgot-btn').textContent = '下一步';
+  }
+}
+
+function showMsg(txt, type) {
+  type = type || 'error';
+  const e = document.getElementById('auth-msg');
+  e.textContent = txt;
+  e.className = 'auth-msg ' + type + ' show';
+}
+
+function clearMsg() {
+  document.getElementById('auth-msg').className = 'auth-msg';
+}
+
+// ══════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('auth-email').value.trim().toLowerCase();
+  const pw    = document.getElementById('auth-password').value;
+  clearMsg();
+  if (!email || !email.includes('@')) { showMsg('请输入有效的邮箱地址'); return; }
+  if (pw.length < 6)                  { showMsg('密码至少需要 6 位'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = '登录中...';
+  try {
+    const profile = sget(profileKey(email));
+    if (!profile) { showMsg('账号不存在，请先注册'); return; }
+    const hash = await hashPw(pw);
+    if (profile.passwordHash !== hash) { showMsg('密码错误，请重试'); return; }
+    currentUser = { uid: profile.uid, email: profile.email };
+    localStorage.setItem('cd-session', JSON.stringify(currentUser));
+    await enterApp();
+  } catch(e) {
+    showMsg('出现错误：' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '登录';
+  }
+}
+
+// ══════════════════════════════════════════
+//  REGISTER
+// ══════════════════════════════════════════
+async function doRegister() {
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
+  const pw    = document.getElementById('reg-password').value;
+  const conf  = document.getElementById('reg-confirm').value;
+  const q     = document.getElementById('reg-q').value;
+  const a     = document.getElementById('reg-a').value.trim().toLowerCase();
+  clearMsg();
+  if (!email || !email.includes('@')) { showMsg('请输入有效的邮箱地址'); return; }
+  if (pw.length < 6)                  { showMsg('密码至少需要 6 位'); return; }
+  if (pw !== conf)                    { showMsg('两次输入的密码不一致'); return; }
+  if (!q)                             { showMsg('请选择密保问题'); return; }
+  if (!a)                             { showMsg('请输入密保答案'); return; }
+
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.textContent = '注册中...';
+  try {
+    if (sget(profileKey(email))) { showMsg('该邮箱已被注册，请直接登录'); return; }
+    const uid = crypto.randomUUID();
+    sset(profileKey(email), {
+      uid, email,
+      passwordHash:  await hashPw(pw),
+      securityQ:     q,
+      securityAHash: await hashPw(a),
+      createdAt:     Date.now()
     });
+    sset(dataKey(uid), { folders: [
+      { id: crypto.randomUUID(), name: 'UI Design', starred: false, files: [] },
+      { id: crypto.randomUUID(), name: 'Coding',    starred: true,  files: [] }
+    ]});
+    currentUser = { uid, email };
+    localStorage.setItem('cd-session', JSON.stringify(currentUser));
+    await enterApp();
+  } catch(e) {
+    showMsg('出现错误：' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '注册账号';
+  }
+}
 
-    // Petal shapes
-    function drawPetal(ctx, x, y, size, angle, opacity) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(angle);
-      ctx.globalAlpha = opacity;
+// ══════════════════════════════════════════
+//  FORGOT PASSWORD
+// ══════════════════════════════════════════
+async function doForgot() {
+  clearMsg();
+  if (forgotStep === 1) {
+    const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+    if (!email || !email.includes('@')) { showMsg('请输入有效的邮箱地址'); return; }
+    const btn = document.getElementById('forgot-btn');
+    btn.disabled = true; btn.textContent = '查询中...';
+    try {
+      const p = sget(profileKey(email));
+      if (!p)          { showMsg('找不到该邮箱的账号'); return; }
+      if (!p.securityQ){ showMsg('该账号未设置密保问题，无法自助找回密码'); return; }
+      // Show the question that THIS account set during registration
+      document.getElementById('forgot-q-label').textContent = QLABELS[p.securityQ] || p.securityQ;
+      document.getElementById('forgot-step2').style.display = '';
+      document.getElementById('forgot-btn').textContent = '重置密码';
+      forgotStep = 2;
+    } catch(e) {
+      showMsg('出现错误：' + e.message);
+    } finally {
+      btn.disabled = false;
+      if (forgotStep === 1) btn.textContent = '下一步';
+    }
+  } else {
+    const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+    const ans   = document.getElementById('forgot-answer').value.trim().toLowerCase();
+    const np    = document.getElementById('forgot-newpw').value;
+    const cp    = document.getElementById('forgot-confirmpw').value;
+    if (!ans)        { showMsg('请输入密保答案'); return; }
+    if (np.length<6) { showMsg('新密码至少 6 位'); return; }
+    if (np !== cp)   { showMsg('两次输入的新密码不一致'); return; }
+    const btn = document.getElementById('forgot-btn');
+    btn.disabled = true; btn.textContent = '重置中...';
+    try {
+      const p = sget(profileKey(email));
+      if (!p) { showMsg('账号不存在'); return; }
+      const ansHash = await hashPw(ans);
+      if (p.securityAHash !== ansHash) { showMsg('密保答案不正确，请重试'); return; }
+      p.passwordHash = await hashPw(np);
+      sset(profileKey(email), p);
+      showMsg('✅ 密码重置成功！即将跳转登录...', 'success');
+      setTimeout(() => switchTab('login'), 1800);
+    } catch(e) {
+      showMsg('出现错误：' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = '重置密码';
+    }
+  }
+}
 
-      // Draw a simple 5-petal flower shape
-      ctx.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const a = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-        const bx = Math.cos(a) * size;
-        const by = Math.sin(a) * size;
-        const cx1 = Math.cos(a - 0.5) * size * 0.5;
-        const cy1 = Math.sin(a - 0.5) * size * 0.5;
-        const cx2 = Math.cos(a + 0.5) * size * 0.5;
-        const cy2 = Math.sin(a + 0.5) * size * 0.5;
-        if (i === 0) ctx.moveTo(cx2, cy2);
-        ctx.quadraticCurveTo(bx, by, cx1, cy1);
-        const na = ((i + 1) * 2 * Math.PI) / 5 - Math.PI / 2;
-        const ncx2 = Math.cos(na + 0.5) * size * 0.5;
-        const ncy2 = Math.sin(na + 0.5) * size * 0.5;
-        ctx.quadraticCurveTo(0, 0, ncx2, ncy2);
+// ══════════════════════════════════════════
+//  ENTER APP
+// ══════════════════════════════════════════
+async function enterApp() {
+  showLoading('正在加载您的文件...');
+  const data = sget(dataKey(currentUser.uid));
+  folders = (data && data.folders) ? data.folders : [];
+  folders.forEach(f => { if (!f.files) f.files = []; });
+
+  const av = sget(avatarKey(currentUser.uid));
+  applyAvatar(av || '🌸');
+  hideLoading();
+
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'flex';
+  document.getElementById('user-display').textContent  = currentUser.email;
+
+  currentView = 'all';
+  document.getElementById('nav-all').classList.add('active-link');
+  document.getElementById('nav-starred').classList.remove('active-link');
+  document.getElementById('view-title').textContent = '📂 My Files';
+  document.getElementById('folders-view').style.display = '';
+  document.getElementById('folder-view').style.display  = 'none';
+  renderFolders();
+  renderRecent();
+}
+
+// ══════════════════════════════════════════
+//  SECURITY QUESTION
+// ══════════════════════════════════════════
+function openSecurityModal() {
+  document.getElementById('sec-q').value  = '';
+  document.getElementById('sec-a').value  = '';
+  document.getElementById('sec-pw').value = '';
+  const msg = document.getElementById('security-msg');
+  msg.style.display = 'none'; msg.className = 'auth-msg';
+  document.getElementById('security-modal').classList.add('open');
+}
+
+function closeSecurityModal() {
+  document.getElementById('security-modal').classList.remove('open');
+}
+
+function showSecMsg(txt, type) {
+  const msg = document.getElementById('security-msg');
+  msg.textContent   = txt;
+  msg.className     = 'auth-msg ' + (type || 'error') + ' show';
+  msg.style.display = 'block';
+}
+
+async function saveSecurityQ() {
+  const q  = document.getElementById('sec-q').value;
+  const a  = document.getElementById('sec-a').value.trim().toLowerCase();
+  const pw = document.getElementById('sec-pw').value;
+  if (!q)           { showSecMsg('请选择密保问题'); return; }
+  if (!a)           { showSecMsg('请输入密保答案'); return; }
+  if (pw.length < 6){ showSecMsg('请输入当前登录密码（至少 6 位）'); return; }
+
+  const p = sget(profileKey(currentUser.email));
+  if (!p) { showSecMsg('账号数据错误，请重新登录'); return; }
+
+  const pwHash = await hashPw(pw);
+  if (p.passwordHash !== pwHash) { showSecMsg('当前密码不正确，请重试'); return; }
+
+  p.securityQ     = q;
+  p.securityAHash = await hashPw(a);
+  sset(profileKey(currentUser.email), p);
+  showSecMsg('✅ 密保问题已更新！', 'success');
+  setTimeout(() => closeSecurityModal(), 1500);
+}
+
+// ══════════════════════════════════════════
+//  AVATAR
+// ══════════════════════════════════════════
+function applyAvatar(av) {
+  const el = document.getElementById('sidebar-avatar');
+  if (!el) return;
+  if (av && av.startsWith('data:')) {
+    el.innerHTML = '<img src="' + av + '" alt="avatar">';
+  } else {
+    el.textContent = av || '🌸';
+  }
+}
+
+function openAvatarModal() {
+  selectedAvatar = null;
+  const grid = document.getElementById('avatar-grid');
+  grid.innerHTML = '';
+  EMOJIS.forEach(e => {
+    const d = document.createElement('button');
+    d.className = 'avatar-opt';
+    d.textContent = e;
+    d.onclick = () => {
+      document.querySelectorAll('.avatar-opt').forEach(x => x.classList.remove('selected'));
+      d.classList.add('selected');
+      selectedAvatar = e;
+    };
+    grid.appendChild(d);
+  });
+  document.getElementById('avatar-modal').classList.add('open');
+}
+
+function closeAvatarModal() {
+  document.getElementById('avatar-modal').classList.remove('open');
+}
+
+// FIX: Compress image before storing to prevent localStorage size failures
+function uploadAvatar(inp) {
+  const file = inp.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 200;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+      else        { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+      const cvs = document.createElement('canvas');
+      cvs.width = w; cvs.height = h;
+      cvs.getContext('2d').drawImage(img, 0, 0, w, h);
+      selectedAvatar = cvs.toDataURL('image/jpeg', 0.85);
+
+      document.querySelectorAll('.avatar-opt').forEach(x => x.classList.remove('selected'));
+      const old = document.getElementById('av-custom');
+      if (old) old.remove();
+      const d = document.createElement('button');
+      d.className = 'avatar-opt selected'; d.id = 'av-custom';
+      d.innerHTML = '<img src="' + selectedAvatar + '">';
+      d.onclick = () => {
+        document.querySelectorAll('.avatar-opt').forEach(x => x.classList.remove('selected'));
+        d.classList.add('selected');
+        selectedAvatar = d.querySelector('img').src;
+      };
+      document.getElementById('avatar-grid').prepend(d);
+    };
+    img.onerror = () => { alert('图片加载失败，请尝试其他图片（支持 JPG / PNG / WebP）'); };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveAvatar() {
+  if (!selectedAvatar) { closeAvatarModal(); return; }
+  sset(avatarKey(currentUser.uid), selectedAvatar);
+  applyAvatar(selectedAvatar);
+  closeAvatarModal();
+}
+
+// ══════════════════════════════════════════
+//  LOGOUT
+// ══════════════════════════════════════════
+function logout() {
+  if (!confirm('确定退出登录吗？')) return;
+  localStorage.removeItem('cd-session');
+  currentUser = null; folders = [];
+  document.getElementById('main-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('auth-email').value    = '';
+  document.getElementById('auth-password').value = '';
+  switchTab('login');
+}
+
+// ══════════════════════════════════════════
+//  AUTO LOGIN
+// ══════════════════════════════════════════
+async function tryAutoLogin() {
+  try {
+    const s = localStorage.getItem('cd-session');
+    if (s) { currentUser = JSON.parse(s); await enterApp(); }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+//  SYNC
+// ══════════════════════════════════════════
+function syncSave() {
+  if (!currentUser) return;
+  setBadge(true);
+  sset(dataKey(currentUser.uid), { folders });
+  setBadge(false);
+}
+
+function setBadge(syncing) {
+  const b = document.getElementById('sync-badge');
+  if (!b) return;
+  b.textContent       = syncing ? '☁️ 同步中...' : '✅ 已同步';
+  b.style.background  = syncing ? '#fff0a0' : 'var(--mint)';
+  b.style.color       = syncing ? '#7a5a00' : '#0e5a3a';
+}
+
+// ══════════════════════════════════════════
+//  LOADING
+// ══════════════════════════════════════════
+function showLoading(m) {
+  document.getElementById('loading-text').textContent = m || '正在加载...';
+  document.getElementById('loading').style.display = 'flex';
+}
+function hideLoading() {
+  document.getElementById('loading').style.display = 'none';
+}
+
+// ══════════════════════════════════════════
+//  FOLDERS VIEW
+// ══════════════════════════════════════════
+function showView(v) {
+  currentView = v;
+  document.getElementById('nav-all').classList.toggle('active-link', v === 'all');
+  document.getElementById('nav-starred').classList.toggle('active-link', v === 'starred');
+  document.getElementById('view-title').textContent = (v === 'all') ? '📂 My Files' : '⭐ Starred';
+  document.getElementById('folders-view').style.display = '';
+  document.getElementById('folder-view').style.display  = 'none';
+  renderFolders();
+  if (v === 'all') renderRecent();
+  else document.getElementById('recent-section').style.display = 'none';
+}
+
+function renderFolders(search) {
+  const grid = document.getElementById('folderGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  if (search === undefined) {
+    const si = document.getElementById('searchInput');
+    search = si ? si.value : '';
+  }
+  const filtered = folders.filter(f =>
+    (currentView === 'starred' ? f.starred : true) &&
+    f.name.toLowerCase().includes(search.toLowerCase())
+  );
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">' +
+      (currentView === 'starred' ? '⭐' : '📭') + '</div><p>' +
+      (currentView === 'starred' ? '还没有收藏的文件夹' : '还没有文件夹，点击「New Folder」创建一个吧！') +
+      '</p></div>';
+    return;
+  }
+  filtered.forEach(folder => {
+    const card = document.createElement('div');
+    card.className  = 'card';
+    card.dataset.id = folder.id;
+    card.innerHTML =
+      '<p class="folder-title">📁 <span>' + folder.name + '</span></p>' +
+      '<p style="font-size:12px;color:#999;margin:4px 0 12px">' + folder.files.length + ' file' + (folder.files.length !== 1 ? 's' : '') + '</p>' +
+      '<div class="card-actions">' +
+        '<button class="star-btn" data-star="' + folder.id + '">' + (folder.starred ? '⭐' : '☆') + '</button>' +
+        '<button class="delete-btn" data-delete="' + folder.id + '">🗑</button>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════
+//  FOLDER MODAL
+// ══════════════════════════════════════════
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('folderInput').value = '';
+  document.getElementById('folderInput').focus();
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+function createFolder() {
+  const name = document.getElementById('folderInput').value.trim();
+  if (!name) { document.getElementById('folderInput').style.border = '2px solid #e24b4a'; return; }
+  folders.push({ id: crypto.randomUUID(), name, starred: false, files: [] });
+  syncSave();
+  renderFolders();
+  closeModal();
+}
+
+// ══════════════════════════════════════════
+//  RECENTLY OPENED
+// ══════════════════════════════════════════
+function trackRecent(folder) {
+  if (!currentUser) return;
+  let recents = sget(recentKey(currentUser.uid)) || [];
+  recents = recents.filter(r => r.folderId !== folder.id);
+  recents.unshift({ folderId: folder.id, folderName: folder.name, openedAt: Date.now() });
+  recents = recents.slice(0, 6);
+  sset(recentKey(currentUser.uid), recents);
+}
+
+function renderRecent() {
+  const section = document.getElementById('recent-section');
+  const grid    = document.getElementById('recentGrid');
+  if (!section || !grid || !currentUser) return;
+  const recents = sget(recentKey(currentUser.uid)) || [];
+  const valid   = recents.filter(r => folders.find(f => f.id === r.folderId));
+  if (!valid.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  grid.innerHTML = '';
+  valid.forEach(r => {
+    const folder = folders.find(f => f.id === r.folderId);
+    if (!folder) return;
+    const card = document.createElement('div');
+    card.className  = 'card';
+    card.dataset.id = folder.id;
+    card.innerHTML =
+      '<p class="folder-title">📂 <span>' + folder.name + '</span></p>' +
+      '<p class="recent-card-meta">' + folder.files.length + ' file' + (folder.files.length !== 1 ? 's' : '') + ' · ' + timeAgo(r.openedAt) + '</p>' +
+      '<div class="card-actions"><button class="star-btn" style="pointer-events:none;opacity:0.4">' + (folder.starred ? '⭐' : '☆') + '</button></div>';
+    card.addEventListener('click', () => openFolder(folder.id));
+    grid.appendChild(card);
+  });
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const min  = Math.floor(diff / 60000);
+  if (min < 1)  return '刚刚';
+  if (min < 60) return min + ' 分钟前';
+  const hr = Math.floor(min / 60);
+  if (hr < 24)  return hr + ' 小时前';
+  const day = Math.floor(hr / 24);
+  if (day < 7)  return day + ' 天前';
+  return new Date(ts).toLocaleDateString('zh-CN', { month:'short', day:'numeric' });
+}
+
+// ══════════════════════════════════════════
+//  FOLDER DETAIL
+// ══════════════════════════════════════════
+function openFolder(id) {
+  currentFolder = folders.find(f => f.id === id);
+  if (!currentFolder) return;
+  trackRecent(currentFolder);
+  document.getElementById('folders-view').style.display = 'none';
+  document.getElementById('folder-view').style.display  = '';
+  document.getElementById('folderTitle').textContent    = '📂 ' + currentFolder.name;
+  renderFiles();
+}
+
+function backToFolders() {
+  currentFolder = null;
+  document.getElementById('folder-view').style.display  = 'none';
+  document.getElementById('folders-view').style.display = '';
+  renderFolders();
+  renderRecent();
+}
+
+function isImage(n) { return /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(n); }
+function getIcon(n) {
+  const ext = n.split('.').pop().toLowerCase();
+  const map = { pdf:'PDF',zip:'ZIP',rar:'ZIP',js:'JS',ts:'JS',html:'HTML',css:'CSS',py:'PY',java:'JAVA',mp4:'VIDEO',mov:'VIDEO',mp3:'AUDIO',doc:'DOC',docx:'DOC',txt:'DOC',xls:'XLS',xlsx:'XLS',ppt:'PPT',pptx:'PPT' };
+  return map[ext] || 'FILE';
+}
+
+function renderFiles() {
+  const grid = document.getElementById('fileGrid');
+  if (!grid || !currentFolder) return;
+  grid.innerHTML = '';
+  if (!currentFolder.files.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">📄</div><p>这个文件夹还是空的，点击「Add File」上传文件</p></div>';
+    return;
+  }
+  currentFolder.files.forEach((file, i) => {
+    const card    = document.createElement('div');
+    card.className = 'card file-card';
+    const actions =
+      '<div class="file-actions">' +
+        '<a href="' + file.url + '" download="' + file.name + '"><button class="download-btn">Download</button></a>' +
+        '<button class="delete-file-btn" onclick="deleteFile(' + i + ')">Delete</button>' +
+      '</div>';
+    if (isImage(file.name)) {
+      card.innerHTML = '<img src="' + file.url + '" style="width:100%;border-radius:8px;display:block;margin-bottom:8px"><p class="file-name">' + file.name + '</p>' + actions;
+    } else {
+      card.innerHTML = '<div class="file-icon">' + getIcon(file.name) + '</div><p class="file-name">' + file.name + '</p>' + actions;
+    }
+    grid.appendChild(card);
+  });
+}
+
+function deleteFile(i) {
+  if (confirm('确定删除这个文件吗？')) {
+    currentFolder.files.splice(i, 1);
+    syncSave();
+    renderFiles();
+  }
+}
+
+function addFile() {
+  const inp = document.createElement('input');
+  inp.type  = 'file';
+  inp.onchange = () => {
+    const file = inp.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    showLoading('正在上传文件...');
+    reader.onload = () => {
+      currentFolder.files.push({ name: file.name, url: reader.result });
+      syncSave();
+      hideLoading();
+      renderFiles();
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+// ══════════════════════════════════════════
+//  EVENT DELEGATION
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Folder grid clicks
+  document.getElementById('folderGrid').addEventListener('click', e => {
+    const star = e.target.closest('[data-star]');
+    const del  = e.target.closest('[data-delete]');
+    const card = e.target.closest('.card');
+    if (star) {
+      const f = folders.find(x => x.id === star.dataset.star);
+      if (f) { f.starred = !f.starred; syncSave(); renderFolders(); }
+      return;
+    }
+    if (del) {
+      if (confirm('确定删除这个文件夹吗？')) {
+        folders = folders.filter(x => x.id !== del.dataset.delete);
+        syncSave(); renderFolders(); renderRecent();
       }
-      ctx.closePath();
-
-      // Pink gradient fill
-      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
-      grad.addColorStop(0, "rgba(255,220,235,1)");
-      grad.addColorStop(1, "rgba(255,160,195,1)");
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      ctx.restore();
+      return;
     }
+    if (card) openFolder(card.dataset.id);
+  });
 
-    // Petals array
-    const petals = [];
-    const COUNT = 38;
+  // Double-click to rename
+  document.getElementById('folderGrid').addEventListener('dblclick', e => {
+    const card = e.target.closest('.card');
+    const span = e.target.closest('.folder-title span');
+    if (!card || !span) return;
+    const f = folders.find(x => x.id === card.dataset.id);
+    if (!f) return;
+    const inp = document.createElement('input');
+    inp.type  = 'text';
+    inp.value = f.name;
+    inp.style.cssText = 'border:2px solid var(--purple);border-radius:8px;padding:2px 8px;font-family:Nunito,sans-serif;font-size:14px;width:120px';
+    span.replaceWith(inp);
+    inp.focus();
+    const done = () => { const n = inp.value.trim(); if (n) f.name = n; syncSave(); renderFolders(); };
+    inp.onblur = done;
+    inp.onkeydown = ev => { if (ev.key === 'Enter') inp.blur(); };
+  });
 
-    for (let i = 0; i < COUNT; i++) {
-      petals.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * -window.innerHeight,
-        size: 6 + Math.random() * 8,
-        speedY: 1.2 + Math.random() * 0.5,
-        speedX: -0.5 + Math.random() * 1,
-        angle: Math.random() * Math.PI * 2,
-        spin: (Math.random() - 0.5) * 0.04,
-        sway: Math.random() * Math.PI * 2,
-        swaySpeed: 0.01 + Math.random() * 0.015,
-        opacity: 0.5 + Math.random() * 0.5,
-      });
+  // Search
+  const si = document.getElementById('searchInput');
+  if (si) si.oninput = () => renderFolders(si.value);
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape')  { closeModal(); closeAvatarModal(); closeSecurityModal(); }
+    if (e.key === 'Enter' && (e.target.id === 'auth-email' || e.target.id === 'auth-password')) doLogin();
+    if (e.key === 'Enter' && e.target.id === 'folderInput') createFolder();
+  });
+
+  tryAutoLogin();
+  initSakura();
+});
+
+// ══════════════════════════════════════════
+//  SAKURA ANIMATION
+// ══════════════════════════════════════════
+function initSakura() {
+  const canvas = document.getElementById('sakura-canvas');
+  const ctx    = canvas.getContext('2d');
+  const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+  resize();
+  window.addEventListener('resize', resize);
+
+  function drawPetal(x, y, sz, ang, op) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    ctx.globalAlpha = op;
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a   = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+      const bx  = Math.cos(a) * sz,  by  = Math.sin(a) * sz;
+      const cx1 = Math.cos(a - .5) * sz * .5, cy1 = Math.sin(a - .5) * sz * .5;
+      const cx2 = Math.cos(a + .5) * sz * .5, cy2 = Math.sin(a + .5) * sz * .5;
+      if (i === 0) ctx.moveTo(cx2, cy2);
+      ctx.quadraticCurveTo(bx, by, cx1, cy1);
+      const na   = ((i + 1) * 2 * Math.PI) / 5 - Math.PI / 2;
+      const ncx2 = Math.cos(na + .5) * sz * .5, ncy2 = Math.sin(na + .5) * sz * .5;
+      ctx.quadraticCurveTo(0, 0, ncx2, ncy2);
     }
+    ctx.closePath();
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, sz);
+    g.addColorStop(0, 'rgba(255,220,235,1)');
+    g.addColorStop(1, 'rgba(255,160,195,1)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.restore();
+  }
 
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const petals = Array.from({ length: 32 }, () => ({
+    x:    Math.random() * window.innerWidth,
+    y:    Math.random() * -window.innerHeight,
+    sz:   6 + Math.random() * 8,
+    vy:   1.2 + Math.random() * .5,
+    vx:   -.5 + Math.random(),
+    ang:  Math.random() * Math.PI * 2,
+    spin: (Math.random() - .5) * .04,
+    sw:   Math.random() * Math.PI * 2,
+    swsp: .01 + Math.random() * .015,
+    op:   .5 + Math.random() * .5
+  }));
 
-      for (const p of petals) {
-        p.sway += p.swaySpeed;
-        p.x += p.speedX + Math.sin(p.sway) * 0.8;
-        p.y += p.speedY;
-        p.angle += p.spin;
-
-        // Reset when off screen
-        if (p.y > canvas.height + 20) {
-          p.y = -20;
-          p.x = Math.random() * canvas.width;
-        }
-        if (p.x > canvas.width + 20) p.x = -20;
-        if (p.x < -20) p.x = canvas.width + 20;
-
-        drawPetal(ctx, p.x, p.y, p.size, p.angle, p.opacity);
+  (function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const p of petals) {
+      p.sw  += p.swsp;
+      p.x   += p.vx + Math.sin(p.sw) * .8;
+      p.y   += p.vy;
+      p.ang += p.spin;
+      if (p.y > canvas.height + 20) {
+        p.y = -20;
+        p.x = Math.random() * canvas.width;
       }
-
-      requestAnimationFrame(animate);
+      drawPetal(p.x, p.y, p.sz, p.ang, p.op);
     }
-
-    animate();
-  </script>
+    requestAnimationFrame(animate);
+  })();
+}
+</script>
 </body>
 </html>

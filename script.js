@@ -1,26 +1,28 @@
-document.addEventListener("DOMContentLoaded", () => {
-  let folders = [];
 
-  // ===== 数据初始化 =====
+  // ══════════════════════════════════════════
+//  STORAGE（最终稳定版）
+// ══════════════════════════════════════════
+async function sset(k, v) {
   try {
-    const stored = localStorage.getItem("folders");
-    if (!stored) {
-      folders = [
-        { id: crypto.randomUUID(), name: "UI Design", starred: false, files: [] },
-        { id: crypto.randomUUID(), name: "Coding", starred: true, files: [] }
-      ];
-      localStorage.setItem("folders", JSON.stringify(folders));
-    } else {
-      folders = JSON.parse(stored);
-    }
+    localStorage.setItem(k, JSON.stringify(v));
   } catch (e) {
-    folders = [];
+    console.error("保存失败:", e);
   }
+}
 
-  // 保证每个文件夹对象完整
+async function sget(k) {
+  try {
+    const r = localStorage.getItem(k);
+    return r ? JSON.parse(r) : null;
+  } catch (e) {
+    console.error("读取失败:", e);
+    return null;
+  }
+}
+
+
   folders.forEach(f => { if (!f.files) f.files = []; });
 
-  // ===== DOM 元素 =====
   const grid = document.getElementById("folderGrid");
   const addBtn = document.getElementById("addBtn");
   const modal = document.getElementById("modal");
@@ -35,7 +37,15 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("folders", JSON.stringify(folders));
   }
 
-  // ===== 渲染逻辑 =====
+  // Folder emojis for variety
+  const folderEmojis = ["\uD83D\uDCC2", "\uD83C\uDF38", "\uD83C\uDF1F", "\uD83C\uDF08", "\uD83C\uDF3F", "\uD83D\uDC9C", "\uD83D\uDCAB", "\uD83C\uDF80"];
+
+  function getFolderEmoji(name) {
+    let hash = 0;
+    for (let c of name) hash += c.charCodeAt(0);
+    return folderEmojis[hash % folderEmojis.length];
+  }
+
   function render(search = "") {
     if (!grid) return;
     grid.innerHTML = "";
@@ -52,20 +62,18 @@ document.addEventListener("DOMContentLoaded", () => {
       card.dataset.id = folder.id;
 
       card.innerHTML = `
-        <p class="folder-title">📁 <span>${folder.name}</span></p>
-        <p style="font-size:12px;color:#999;margin:4px 0 12px;">${folder.files.length} file${folder.files.length !== 1 ? "s" : ""}</p>
+        <div style="font-size:32px;margin-bottom:10px;animation:float 3s ease-in-out infinite;">${getFolderEmoji(folder.name)}</div>
+        <p class="folder-title"><span>${folder.name}</span></p>
+        <p style="font-size:11px;color:#c9a0c9;margin:4px 0 12px;font-weight:600;">${folder.files.length} file${folder.files.length !== 1 ? "s" : ""}</p>
         <div class="card-actions">
-          <button class="star-btn" data-star="${folder.id}">
-            ${folder.starred ? "⭐" : "☆"}
-          </button>
-          <button class="delete-btn" data-delete="${folder.id}">🗑</button>
+          <button class="star-btn" data-star="${folder.id}">${folder.starred ? "\u2B50" : "\u2606"}</button>
+          <button class="delete-btn" data-delete="${folder.id}">Delete</button>
         </div>
       `;
       grid.appendChild(card);
     });
   }
 
-  // ===== 操作函数 =====
   const toggleStar = (id) => {
     const folder = folders.find(f => f.id === id);
     if (folder) {
@@ -76,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const deleteFolder = (id) => {
-    if (confirm("确定删除这个文件夹吗？")) {
+    if (confirm("Delete this folder?")) {
       folders = folders.filter(f => f.id !== id);
       save();
       render(searchInput.value);
@@ -86,8 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const renameFolder = (id, textSpan) => {
     const folder = folders.find(f => f.id === id);
     const input = document.createElement("input");
+    input.type = "text";
     input.value = folder.name;
     input.className = "rename-input";
+    input.style.cssText = "width:100%;border-radius:10px;padding:4px 8px;border:2px solid #ffb3d1;font-family:Nunito,sans-serif;font-size:14px;";
 
     textSpan.replaceWith(input);
     input.focus();
@@ -103,62 +113,45 @@ document.addEventListener("DOMContentLoaded", () => {
     input.onkeydown = (e) => { if (e.key === "Enter") input.blur(); };
   };
 
-  // ===== 事件委托 =====
   grid.addEventListener("click", (e) => {
     const starBtn = e.target.closest("[data-star]");
     const deleteBtn = e.target.closest("[data-delete]");
     const card = e.target.closest(".card");
 
-    if (starBtn) {
-      toggleStar(starBtn.dataset.star);
-      return;
-    }
-
-    if (deleteBtn) {
-      deleteFolder(deleteBtn.dataset.delete);
-      return;
-    }
-
-    if (card) {
-      window.location.href = `folder.html?id=${card.dataset.id}`;
-    }
+    if (starBtn) { toggleStar(starBtn.dataset.star); return; }
+    if (deleteBtn) { deleteFolder(deleteBtn.dataset.delete); return; }
+    if (card) { window.location.href = `folder.html?id=${card.dataset.id}`; }
   });
 
-  // 双击重命名
   grid.addEventListener("dblclick", (e) => {
     const card = e.target.closest(".card");
     const textSpan = e.target.closest(".folder-title span");
-    if (card && textSpan) {
-      renameFolder(card.dataset.id, textSpan);
-    }
+    if (card && textSpan) renameFolder(card.dataset.id, textSpan);
   });
 
-  // ===== Modal 逻辑 =====
   const openModal = () => {
     modal.style.display = "flex";
     folderInput.focus();
-    folderInput.style.border = "1px solid #ddd"; // 重置红框
+    folderInput.style.border = "2px solid #ffb3d1";
   };
 
   const closeModal = () => {
     modal.style.display = "none";
     folderInput.value = "";
-    folderInput.style.border = "1px solid #ddd";
+    folderInput.style.border = "2px solid #ffb3d1";
   };
 
   addBtn.onclick = openModal;
   cancelBtn.onclick = closeModal;
 
-  // Escape 键关闭 modal
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal.style.display === "flex") closeModal();
   });
 
-  saveBtn.onclick = () => {
+  saveBtn.onclick = async () => {
     const name = folderInput.value.trim();
     if (!name) {
-      // 空名称时给红框提示
-      folderInput.style.border = "1px solid #e24b4a";
+      folderInput.style.border = "2px solid #e05a5a";
       folderInput.focus();
       return;
     }
@@ -166,12 +159,10 @@ document.addEventListener("DOMContentLoaded", () => {
     save();
     render();
     closeModal();
+    await syncSave();
   };
 
-  // 搜索逻辑
-  if (searchInput) {
-    searchInput.oninput = () => render(searchInput.value);
-  }
+  if (searchInput) searchInput.oninput = () => render(searchInput.value);
 
   render();
-});
+;
