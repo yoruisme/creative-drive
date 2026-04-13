@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
@@ -293,7 +293,6 @@ button:active{transform:scale(.97)}
 </div>
 
 </div><!-- #app -->
-
 <script>
 // ══════════════════════════════════════════
 //  STORAGE
@@ -450,7 +449,6 @@ async function doForgot() {
       const p = sget(profileKey(email));
       if (!p)          { showMsg('找不到该邮箱的账号'); return; }
       if (!p.securityQ){ showMsg('该账号未设置密保问题，无法自助找回密码'); return; }
-      // Show the question that THIS account set during registration
       document.getElementById('forgot-q-label').textContent = QLABELS[p.securityQ] || p.securityQ;
       document.getElementById('forgot-step2').style.display = '';
       document.getElementById('forgot-btn').textContent = '重置密码';
@@ -493,9 +491,14 @@ async function doForgot() {
 // ══════════════════════════════════════════
 async function enterApp() {
   showLoading('正在加载您的文件...');
-  const data = sget(dataKey(currentUser.uid));
+  // 优先从云端读取，失败时降级到本地 localStorage
+  let data = null;
+  try { data = await cloudLoad(); } catch(e) {}
+  if (!data) data = sget(dataKey(currentUser.uid));
   folders = (data && data.folders) ? data.folders : [];
   folders.forEach(f => { if (!f.files) f.files = []; });
+  // 将云端数据同步回本地缓存
+  sset(dataKey(currentUser.uid), { folders });
 
   const av = sget(avatarKey(currentUser.uid));
   applyAvatar(av || '🌸');
@@ -594,7 +597,6 @@ function closeAvatarModal() {
   document.getElementById('avatar-modal').classList.remove('open');
 }
 
-// FIX: Compress image before storing to prevent localStorage size failures
 function uploadAvatar(inp) {
   const file = inp.files[0];
   if (!file) return;
@@ -662,13 +664,37 @@ async function tryAutoLogin() {
 }
 
 // ══════════════════════════════════════════
-//  SYNC
+//  SYNC  (Firestore 云同步)
 // ══════════════════════════════════════════
+let _db = null; // Firestore 实例，由底部 module 脚本注入
+
 function syncSave() {
   if (!currentUser) return;
-  setBadge(true);
+  // 本地立即保存（离线时也有数据）
   sset(dataKey(currentUser.uid), { folders });
-  setBadge(false);
+  setBadge(true);
+
+  if (_db) {
+    // 异步同步到 Firestore
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+      .then(({ doc, setDoc }) => {
+        return setDoc(doc(_db, "users", currentUser.uid), { folders: JSON.parse(JSON.stringify(folders)) });
+      })
+      .then(() => setBadge(false))
+      .catch(err => { console.error("云同步失败:", err); setBadge(false); });
+  } else {
+    setBadge(false);
+  }
+}
+
+async function cloudLoad() {
+  if (!_db || !currentUser) return null;
+  try {
+    const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const snap = await getDoc(doc(_db, "users", currentUser.uid));
+    if (snap.exists()) return snap.data();
+  } catch(e) { console.error("云读取失败:", e); }
+  return null;
 }
 
 function setBadge(syncing) {
@@ -739,9 +765,6 @@ function renderFolders(search) {
   });
 }
 
-// ══════════════════════════════════════════
-//  FOLDER MODAL
-// ══════════════════════════════════════════
 function openModal() {
   document.getElementById('modal').classList.add('open');
   document.getElementById('folderInput').value = '';
@@ -891,11 +914,12 @@ function addFile() {
 //  EVENT DELEGATION
 // ══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Folder grid clicks
   document.getElementById('folderGrid').addEventListener('click', e => {
     const star = e.target.closest('[data-star]');
     const del  = e.target.closest('[data-delete]');
     const card = e.target.closest('.card');
+    // 如果点击的是正在编辑中的 input，忽略
+    if (e.target.tagName === 'INPUT') return;
     if (star) {
       const f = folders.find(x => x.id === star.dataset.star);
       if (f) { f.starred = !f.starred; syncSave(); renderFolders(); }
@@ -911,11 +935,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (card) openFolder(card.dataset.id);
   });
 
-  // Double-click to rename
   document.getElementById('folderGrid').addEventListener('dblclick', e => {
     const card = e.target.closest('.card');
     const span = e.target.closest('.folder-title span');
     if (!card || !span) return;
+    e.stopPropagation(); // 阻止冒泡，防止触发 click → openFolder
     const f = folders.find(x => x.id === card.dataset.id);
     if (!f) return;
     const inp = document.createElement('input');
@@ -924,16 +948,28 @@ document.addEventListener('DOMContentLoaded', () => {
     inp.style.cssText = 'border:2px solid var(--purple);border-radius:8px;padding:2px 8px;font-family:Nunito,sans-serif;font-size:14px;width:120px';
     span.replaceWith(inp);
     inp.focus();
-    const done = () => { const n = inp.value.trim(); if (n) f.name = n; syncSave(); renderFolders(); };
+    inp.select();
+    let saved = false;
+    const done = () => {
+      if (saved) return;
+      saved = true;
+      const n = inp.value.trim();
+      if (n) f.name = n;
+      syncSave();
+      renderFolders();
+    };
     inp.onblur = done;
-    inp.onkeydown = ev => { if (ev.key === 'Enter') inp.blur(); };
+    inp.onkeydown = ev => {
+      if (ev.key === 'Enter') { ev.preventDefault(); inp.blur(); }
+      if (ev.key === 'Escape') { saved = true; renderFolders(); } // 取消编辑
+    };
+    // 阻止 input 上的 click 冒泡，防止保存后触发 openFolder
+    inp.addEventListener('click', ev => ev.stopPropagation());
   });
 
-  // Search
   const si = document.getElementById('searchInput');
   if (si) si.oninput = () => renderFolders(si.value);
 
-  // Keyboard shortcuts
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape')  { closeModal(); closeAvatarModal(); closeSecurityModal(); }
     if (e.key === 'Enter' && (e.target.id === 'auth-email' || e.target.id === 'auth-password')) doLogin();
@@ -1009,31 +1045,25 @@ function initSakura() {
     requestAnimationFrame(animate);
   })();
 }
-
-
 </script>
 <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  import { initializeApp }       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore }        from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   const firebaseConfig = {
-    apiKey: "AIzaSyC_mQkqDQLt2-BfdBEe6bvDgIuuFFFcpTc",
-    authDomain: "creative-drive-98b18.firebaseapp.com",
-    projectId: "creative-drive-98b18",
-    storageBucket: "creative-drive-98b18.firebasestorage.app",
+    apiKey:            "AIzaSyC_mQkqDQLt2-BfdBEe6bvDgIuuFFFcpTc",
+    authDomain:        "creative-drive-98b18.firebaseapp.com",
+    projectId:         "creative-drive-98b18",
+    storageBucket:     "creative-drive-98b18.firebasestorage.app",
     messagingSenderId: "175791573877",
-    appId: "1:175791573877:web:37364173ceaa0f1b01613c",
-    measurementId: "G-R1WKF52S62"
+    appId:             "1:175791573877:web:37364173ceaa0f1b01613c",
+    measurementId:     "G-R1WKF52S62"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
+  // 把 Firestore 实例注入到全局变量，让主脚本的 syncSave / cloudLoad 使用
+  window._db = getFirestore(app);
+  console.log("✅ Firebase Firestore 初始化完成");
 </script>
 </body>
 </html>
