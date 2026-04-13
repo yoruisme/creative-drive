@@ -367,6 +367,33 @@ function clearMsg() {
 }
 
 // ══════════════════════════════════════════
+//  FIRESTORE 账号辅助函数
+// ══════════════════════════════════════════
+async function fsGetProfile(email) {
+  if (!window._db) return sget(profileKey(email)); // 降级本地
+  try {
+    const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const snap = await getDoc(doc(window._db, "profiles", email.toLowerCase()));
+    return snap.exists() ? snap.data() : null;
+  } catch(e) {
+    console.error("读取账号失败，降级本地:", e);
+    return sget(profileKey(email));
+  }
+}
+
+async function fsSetProfile(email, data) {
+  // 同时写本地（离线备份）和云端
+  sset(profileKey(email), data);
+  if (!window._db) return;
+  try {
+    const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    await setDoc(doc(window._db, "profiles", email.toLowerCase()), data);
+  } catch(e) {
+    console.error("保存账号到云端失败:", e);
+  }
+}
+
+// ══════════════════════════════════════════
 //  LOGIN
 // ══════════════════════════════════════════
 async function doLogin() {
@@ -379,7 +406,8 @@ async function doLogin() {
   const btn = document.getElementById('login-btn');
   btn.disabled = true; btn.textContent = '登录中...';
   try {
-    const profile = sget(profileKey(email));
+    // 从 Firestore 云端读取账号（手机/其他设备也能找到）
+    const profile = await fsGetProfile(email);
     if (!profile) { showMsg('账号不存在，请先注册'); return; }
     const hash = await hashPw(pw);
     if (profile.passwordHash !== hash) { showMsg('密码错误，请重试'); return; }
@@ -412,19 +440,29 @@ async function doRegister() {
   const btn = document.getElementById('reg-btn');
   btn.disabled = true; btn.textContent = '注册中...';
   try {
-    if (sget(profileKey(email))) { showMsg('该邮箱已被注册，请直接登录'); return; }
+    // 先查云端，防止重复注册
+    const existing = await fsGetProfile(email);
+    if (existing) { showMsg('该邮箱已被注册，请直接登录'); return; }
     const uid = crypto.randomUUID();
-    sset(profileKey(email), {
+    const profileData = {
       uid, email,
       passwordHash:  await hashPw(pw),
       securityQ:     q,
       securityAHash: await hashPw(a),
       createdAt:     Date.now()
-    });
-    sset(dataKey(uid), { folders: [
+    };
+    // 写入 Firestore + 本地备份
+    await fsSetProfile(email, profileData);
+    // 写入初始 folders 到 Firestore
+    const initFolders = [
       { id: crypto.randomUUID(), name: 'UI Design', starred: false, files: [] },
       { id: crypto.randomUUID(), name: 'Coding',    starred: true,  files: [] }
-    ]});
+    ];
+    sset(dataKey(uid), { folders: initFolders });
+    if (window._db) {
+      const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      await setDoc(doc(window._db, "users", uid), { folders: initFolders });
+    }
     currentUser = { uid, email };
     localStorage.setItem('cd-session', JSON.stringify(currentUser));
     await enterApp();
@@ -446,7 +484,7 @@ async function doForgot() {
     const btn = document.getElementById('forgot-btn');
     btn.disabled = true; btn.textContent = '查询中...';
     try {
-      const p = sget(profileKey(email));
+      const p = await fsGetProfile(email);
       if (!p)          { showMsg('找不到该邮箱的账号'); return; }
       if (!p.securityQ){ showMsg('该账号未设置密保问题，无法自助找回密码'); return; }
       document.getElementById('forgot-q-label').textContent = QLABELS[p.securityQ] || p.securityQ;
@@ -470,12 +508,12 @@ async function doForgot() {
     const btn = document.getElementById('forgot-btn');
     btn.disabled = true; btn.textContent = '重置中...';
     try {
-      const p = sget(profileKey(email));
+      const p = await fsGetProfile(email);
       if (!p) { showMsg('账号不存在'); return; }
       const ansHash = await hashPw(ans);
       if (p.securityAHash !== ansHash) { showMsg('密保答案不正确，请重试'); return; }
       p.passwordHash = await hashPw(np);
-      sset(profileKey(email), p);
+      await fsSetProfile(email, p);
       showMsg('✅ 密码重置成功！即将跳转登录...', 'success');
       setTimeout(() => switchTab('login'), 1800);
     } catch(e) {
@@ -549,7 +587,7 @@ async function saveSecurityQ() {
   if (!a)           { showSecMsg('请输入密保答案'); return; }
   if (pw.length < 6){ showSecMsg('请输入当前登录密码（至少 6 位）'); return; }
 
-  const p = sget(profileKey(currentUser.email));
+  const p = await fsGetProfile(currentUser.email);
   if (!p) { showSecMsg('账号数据错误，请重新登录'); return; }
 
   const pwHash = await hashPw(pw);
@@ -557,7 +595,7 @@ async function saveSecurityQ() {
 
   p.securityQ     = q;
   p.securityAHash = await hashPw(a);
-  sset(profileKey(currentUser.email), p);
+  await fsSetProfile(currentUser.email, p);
   showSecMsg('✅ 密保问题已更新！', 'success');
   setTimeout(() => closeSecurityModal(), 1500);
 }
